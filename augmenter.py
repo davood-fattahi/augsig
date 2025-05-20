@@ -1,18 +1,25 @@
-from utils import normalize_per_instance
+from utils import normalize
 from warper import twarp_bezier, awarp_bezier, twarp_pchip, awarp_pchip
 import numpy as np
 
 
 class Augment:
-    def __init__(self, config, dtype):
+    """
+    A callable augmentation wrapper for NumPy 1D signals.
+
+    Args:
+        config (dict): augmentation strategy definitions
+
+    Usage:
+        augmentor = Augment(config)
+        augmented = augmentor(signal)  # signal shape (N,) → output shape (N, K)
+    """
+
+    def __init__(self, config):
         self.config = config
-        self.dtype = dtype
 
     def __call__(self, signal):
-        if self.dtype == "torch":
-            augdata=augment_torch(signal, self.config)
-        elif self.dtype == "numpy":
-            augdata=augment_np(signal, self.config)
+        augdata=augment(signal, self.config)
         return augdata
 
 
@@ -54,20 +61,18 @@ def augment(data: np.ndarray, aug_config: dict) -> np.ndarray:
             augmented = 1.0 - augmented
 
         # Time/Amplitude Warping
-        if any(config.get(k, False) for k in ["Bezier_time_warp", "Bezier_amp_warp", "PCHIP_time_warp", "PCHIP_amp_warp"]):
-            signal_np = augmented.copy()
-            if config.get("Bezier_time_warp", False):
-                signal_np = twarp_bezier(signal_np, variance=config.get("Bezier_time_warp_var", 0.01))
-            if config.get("Bezier_amp_warp", False):
-                signal_np = awarp_bezier(signal_np, variance=config.get("Bezier_amp_warp_var", 0.05))
-            if config.get("PCHIP_time_warp", False):
-                signal_np = twarp_pchip(signal_np, variance=config.get("PCHIP_time_warp_var", 0.01))
-            if config.get("PCHIP_amp_warp", False):
-                signal_np = awarp_pchip(signal_np, variance=config.get("PCHIP_amp_warp_var", 0.05))
-            augmented = signal_np
+
+        if config.get("Bezier_time_warp", False):
+            augmented = twarp_bezier(augmented, variance=config.get("Bezier_time_warp_var", 0.01))
+        if config.get("Bezier_amp_warp", False):
+            augmented = awarp_bezier(augmented, variance=config.get("Bezier_amp_warp_var", 0.05))
+        if config.get("PCHIP_time_warp", False):
+            augmented = twarp_pchip(augmented, variance=config.get("PCHIP_time_warp_var", 0.01))
+        if config.get("PCHIP_amp_warp", False):
+            augmented = awarp_pchip(augmented, variance=config.get("PCHIP_amp_warp_var", 0.05))
 
         # Normalize
-        augmented = normalize_per_instance(augmented)
+        augmented = normalize(augmented)
 
         # Append
         aug_versions.append(augmented)
