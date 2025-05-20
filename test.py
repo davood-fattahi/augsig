@@ -1,7 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.interpolate import PchipInterpolator
-import matplotlib.pyplot as plt
 from warper import awarp_pchip, twarp_pchip, awarp_bezier, twarp_bezier
 from augmenter import augment as aug
 
