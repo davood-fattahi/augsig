@@ -1,10 +1,5 @@
 import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
 from scipy.interpolate import PchipInterpolator
-import numpy as np
-from scipy.interpolate import PchipInterpolator
-
 
 def rand_knots(k=4, variance=0.05):
     x_vals = np.append(np.append(0, np.arange(0, 1, 1/(k-2)) + 1/(2*k - 4)), 1)
@@ -28,6 +23,7 @@ def bezier_curve(t, points):
     )
 
 def twarp_bezier(signal, variance=0.05):
+    signal = signal.squeeze()
     n = len(signal)
     t = np.linspace(0, 1, n)
     _, y_vals = rand_knots(k=4, variance=variance)
@@ -36,6 +32,7 @@ def twarp_bezier(signal, variance=0.05):
     return np.interp(t, bezier_map, signal)
 
 def twarp_pchip(signal, k=4, variance=0.05):
+    signal = signal.squeeze()
     n = len(signal)
     t = np.linspace(0, 1, n)
     x_vals, y_vals = rand_knots(k=k, variance=variance)
@@ -44,6 +41,7 @@ def twarp_pchip(signal, k=4, variance=0.05):
     return np.interp(t, pchip_map, signal)
 
 def awarp_pchip(signal, k=4, variance=0.05):
+    signal = signal.squeeze()
     n = len(signal)
     t = np.linspace(0, 1, n)
     x_vals, _ = rand_knots(k=k, variance=variance)
@@ -52,6 +50,7 @@ def awarp_pchip(signal, k=4, variance=0.05):
     return signal + pchip_map
 
 def awarp_bezier(signal, variance=0.05):
+    signal = signal.squeeze()
     n = len(signal)
     t = np.linspace(0, 1, n)
     y_vals = np.random.uniform(-variance, variance, size=4)
@@ -59,6 +58,7 @@ def awarp_bezier(signal, variance=0.05):
     return signal + bezier_map
 
 def amod_bezier(signal, variance=0.05):
+    signal = signal.squeeze()
     n = len(signal)
     t = np.linspace(0, 1, n)
     y_vals = np.random.uniform(1-variance, 1+variance, size=4)
@@ -67,6 +67,7 @@ def amod_bezier(signal, variance=0.05):
 
 
 def amod_pchip(signal, k=4, variance=0.05):
+    signal = signal.squeeze()
     n = len(signal)
     t = np.linspace(0, 1, n)
     x_vals, _ = rand_knots(k=k, variance=variance)
@@ -74,43 +75,4 @@ def amod_pchip(signal, k=4, variance=0.05):
     pchip_map = PchipInterpolator(x_vals, y_vals)(t)
     return signal * pchip_map
 
-
-
-# X=np.load("../datasets/Stanford/X_test.npy")
-# fs = 40
-
-# x=X[1,:]
-# t = np.arange(len(x)) / fs  # Make sure you set the correct fs
-# x_pchip = awarp_pchip(x, k=4, variance=0.05)
-# x_pchip = twarp_pchip(x_pchip, k=4, variance=0.01)
-
-# x_bezier = awarp_bezier(x, variance=0.05)
-# x_bezier = twarp_bezier(x_bezier, variance=0.01)
-
-# # Plot both signals
-# plt.figure(figsize=(10, 4))
-# plt.plot(t, x, label='Original PPG')
-# plt.plot(t, x_pchip, label='PCHIP Amp & Time Warped PPG')
-# plt.xlabel("Time (s)")
-# plt.ylabel("Amplitude")
-# plt.title("Augmentation effect")
-# plt.grid(True)
-# plt.legend()
-# plt.tight_layout()
-# plt.show()
-
-
-
-
-# # Plot both signals
-# plt.figure(figsize=(10, 4))
-# plt.plot(t, x, label='Original PPG')
-# plt.plot(t, x_bezier, label='Bezier Amp & Time Warped PPG')
-# plt.xlabel("Time (s)")
-# plt.ylabel("Amplitude")
-# plt.title("Augmentation effect")
-# plt.grid(True)
-# plt.legend()
-# plt.tight_layout()
-# plt.show()
 
