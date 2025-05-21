@@ -1,5 +1,5 @@
-from utils import normalize
-from warper import twarp_bezier, awarp_bezier, twarp_pchip, awarp_pchip
+from .utils import normalize
+from .warper import twarp_bezier, awarp_bezier, twarp_pchip, awarp_pchip
 import numpy as np
 
 

@@ -22,8 +22,7 @@ pip install scipy
 ---
 
 ## Usage 
-### Example:
-See test.py file.
+### Example: See test.py file.
 ---
 
 ## Package Structure
