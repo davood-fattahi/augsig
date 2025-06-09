@@ -1,5 +1,6 @@
-from .utils import normalize
-from .warper import twarp_bezier, awarp_bezier, twarp_pchip, awarp_pchip
+from utils import normalize
+from warper import twarp_bezier, awarp_bezier, twarp_pchip, awarp_pchip
+from noisifier import noisify
 import numpy as np
 
 
@@ -46,11 +47,11 @@ def augment(data: np.ndarray, aug_config: dict) -> np.ndarray:
         # Gaussian noise
         if config.get("Add_noise", False):
             snr_db = config["SNRdb"]
-            signal_power = np.mean(data ** 2)
-            snr_linear = 10 ** (snr_db / 10)
-            noise_power = signal_power / snr_linear
-            noise = np.random.randn(*data.shape) * np.sqrt(noise_power)
-            augmented += noise
+            noise_color = config.get("noise_color", 'white')
+            bpass_params = config.get("bpass_params", None)
+            dist = config.get("dist", 'gauss')
+            resample_pool = config.get("resample_pool", None)
+            augmented, _ = noisify(data, snr_db, color=noise_color, bpass_params=bpass_params, dist=dist, resample_pool=resample_pool)
 
         # Flip
         if config.get("Flip", False):
