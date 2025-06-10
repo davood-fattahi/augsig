@@ -9,7 +9,7 @@
 Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/augsig.git
+git clone https://github.com/davood-fattahi/augsig.git
 cd augsig
 ```
 
@@ -30,6 +30,7 @@ pip install scipy
 ```
 augsig/
 ├── augmenter.py      # Augment class, augment_np, augment_torch
+├── noisifier.py      # Add different noise 
 ├── warper.py         # Bezier and PCHIP warping logic
 ├── utils.py          # Normalization and helpers
 ├── synthesizer.py    # Synthetic signal generation (extendable)
