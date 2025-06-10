@@ -1,6 +1,6 @@
-from utils import normalize
-from warper import twarp_bezier, awarp_bezier, twarp_pchip, awarp_pchip
-from noisifier import noisify
+from augsig.utils import normalize
+from augsig.warper import twarp_bezier, awarp_bezier, twarp_pchip, awarp_pchip
+from augsig.noisifier import noisify
 import numpy as np
 
 
