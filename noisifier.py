@@ -70,5 +70,6 @@ def color_noise(white, exponent):
 def bandpass(signal, fl_norm, fh_norm, order=4):
     if fl_norm == 0 & fh_norm ==1: # no filter
         return signal
-    b, a = butter(order, [fl_norm, fh_norm], btype='band')
-    return filtfilt(b, a, signal)
+    else:
+        b, a = butter(order, [fl_norm, fh_norm], btype='band')
+        return filtfilt(b, a, signal)
