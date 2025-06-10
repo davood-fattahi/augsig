@@ -30,7 +30,7 @@ def noisify(signal, snr_db, color='white', bpass_params=None, dist='gauss', resa
         if resample_pool is None:
             raise ValueError("resample_pool must be provided for resample distribution")
         elif resample_pool == "self":
-            resample_pool == signal
+            resample_pool = signal
         pool_power = np.mean(resample_pool ** 2)
         scale = np.sqrt(noise_power/pool_power)
         noise = scale * np.random.choice(resample_pool, size=n, replace=True)
