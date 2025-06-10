@@ -1,6 +1,5 @@
 import numpy as np
-from scipy.signal import butter, filtfilt
-
+from augsig.utils import freqfilt
 def noisify(signal, snr_db, color='white', bpass_params=None, dist='gauss', resample_pool=None):
     """
     Add colored, SNR-controlled noise to a signal.
@@ -48,7 +47,7 @@ def noisify(signal, snr_db, color='white', bpass_params=None, dist='gauss', resa
         if bpass_params is None:
             raise ValueError('frequency bounds must be provided for fbounded')
         # bpass_params = [fl_norm, fh_norm, order]
-        noise = bandpass(noise, *bpass_params)
+        noise = freqfilt(noise, *bpass_params)
     elif color == 'white':
         pass
     else:
@@ -66,10 +65,3 @@ def color_noise(white, exponent):
     X_colored = X / (freqs ** (exponent/2))
     colored = np.fft.irfft(X_colored, n=len(white))
     return colored
-
-def bandpass(signal, fl_norm, fh_norm, order=4):
-    if fl_norm == 0 & fh_norm ==1: # no filter
-        return signal
-    else:
-        b, a = butter(order, [fl_norm, fh_norm], btype='band')
-        return filtfilt(b, a, signal)
