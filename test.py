@@ -1,12 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from warper import awarp_pchip, twarp_pchip, awarp_bezier, twarp_bezier
-from noisifier import noisify
-from augmenter import augment as aug
+from augsig.warper import awarp_pchip, twarp_pchip, awarp_bezier, twarp_bezier
+from augsig.noisifier import noisify
+from augsig.augmenter import augment as aug
 
 
 
-X=np.load("../data/test/signal.npy")
+X=np.load("../data/Stanford/test/signal.npy")
 fs = 40
 x=X[1,:]
 x=x.squeeze()
@@ -69,7 +69,8 @@ tta_aug_configs =    {
         "aug4": {"Bezier_amp_warp": True, "Bezier_amp_var": 0.005},
         "aug5": {"PCHIP_amp_warp": True, "PCHIP_amp_var": 0.005},
         "aug6": {"PCHIP_time_warp": True, "PCHIP_time_var": 0.001},
-        "aug7": {"Add_noise": True, "SNRdb": 20, "noise_color": 'fbounded', "bpass_params": [.2, .8, 4], "dist": 'gauss', "resample_pool": None}
+        "aug7": {"Add_noise": True, "SNRdb": 20, "noise_color": 'fbounded', "bpass_params": [.2, .8, 4], "dist": 'gauss', "resample_pool": None},
+        "aug8": {"drift": True}
     }
 
 x_aug=aug(x, tta_aug_configs)
@@ -77,7 +78,7 @@ x_aug=aug(x, tta_aug_configs)
 
 # Plot both signals
 
-for xx in x_aug.T:
+for i, xx in enumerate(x_aug.T):
     plt.figure(figsize=(10, 4))
     plt.plot(t, x, label='Original PPG')
     plt.plot(t, xx, label='Augmented PPG')
@@ -88,3 +89,5 @@ for xx in x_aug.T:
     plt.legend()
     plt.tight_layout()
     plt.show()
+    # plt.savefig(f'myplot{i}.png')
+    # plt.close()

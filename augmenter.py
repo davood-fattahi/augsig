@@ -2,6 +2,7 @@ from augsig.utils import normalize
 from augsig.warper import twarp_bezier, awarp_bezier, twarp_pchip, awarp_pchip
 from augsig.noisifier import noisify
 import numpy as np
+import neurokit2 as nk
 
 
 class Augment:
@@ -44,14 +45,14 @@ def augment(data: np.ndarray, aug_config: dict) -> np.ndarray:
     for config in aug_config.values():
         augmented = data.copy()
 
-        # Gaussian noise
+        # Add noise
         if config.get("Add_noise", False):
             snr_db = config["SNRdb"]
             noise_color = config.get("noise_color", 'white')
             bpass_params = config.get("bpass_params", None)
             dist = config.get("dist", 'gauss')
             resample_pool = config.get("resample_pool", None)
-            augmented, _ = noisify(data, snr_db, color=noise_color, bpass_params=bpass_params, dist=dist, resample_pool=resample_pool)
+            augmented, _ = noisify(augmented, snr_db, color=noise_color, bpass_params=bpass_params, dist=dist, resample_pool=resample_pool)
 
         # Flip
         if config.get("Flip", False):
@@ -71,6 +72,25 @@ def augment(data: np.ndarray, aug_config: dict) -> np.ndarray:
             augmented = twarp_pchip(augmented, variance=config.get("PCHIP_time_warp_var", 0.01))
         if config.get("PCHIP_amp_warp", False):
             augmented = awarp_pchip(augmented, variance=config.get("PCHIP_amp_warp_var", 0.05))
+
+
+        # Add NeuroKit2 artifacts
+        # default sampling frequency = 1000
+
+        # low frequency noise
+        if config.get("lf_noise", False):
+            augmented = nk.signal_distort(augmented, sampling_rate=config.get("sampling_rate", 1000), noise_amplitude=config.get("lf_noise_amplitude", 0.1), noise_frequency=config.get("sampling_rate", 1000)*config.get("lf_noise_frequency", 0.1))
+        # powerline
+        if config.get("powerline", False):
+            augmented = nk.signal_distort(augmented, sampling_rate=config.get("sampling_rate", 1000), powerline_amplitude=config.get("powerline_amplitude", 0.1), powerline_frequency=config.get("sampling_rate", 1000)*config.get("powerline_frequency", 0.1))
+        # burst
+        if config.get("burst", False):
+            # default sampling frequency = 1000
+            augmented = nk.signal_distort(augmented, sampling_rate=config.get("sampling_rate", 1000), artifacts_amplitude=config.get("burst_amplitude", 0.1), artifacts_number = config.get("burst_number", 3), artifacts_frequency=config.get("sampling_rate", 1000)*config.get("burst_frequency", 0.1))
+        # drift
+        if config.get("drift", False):
+            # default sampling frequency = 1000
+            augmented = nk.signal_distort(augmented, sampling_rate=config.get("sampling_rate", 1000), linear_drift=True)
 
         # Normalize
         augmented = normalize(augmented)
