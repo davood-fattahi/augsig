@@ -43,60 +43,62 @@ def augment(data: np.ndarray, aug_config: dict) -> np.ndarray:
     aug_versions = [data.copy()]  # include original
 
     for config in aug_config.values():
-        augmented = data.copy()
 
-        # Add noise
-        if config.get("Add_noise", False):
-            snr_db = config["SNRdb"]
-            noise_color = config.get("noise_color", 'white')
-            bpass_params = config.get("bpass_params", None)
-            dist = config.get("dist", 'gauss')
-            resample_pool = config.get("resample_pool", None)
-            augmented, _ = noisify(augmented, snr_db, color=noise_color, bpass_params=bpass_params, dist=dist, resample_pool=resample_pool)
+        for m in range(config.get("num_copies", 1))   # Actualy it is not duplicating, but it is regenerating. Due to stochastic factors like noises, the regenerated ones won't be the same.
+            augmented = data.copy()
 
-        # Flip
-        if config.get("Flip", False):
-            augmented = np.flip(augmented)
+            # Add noise
+            if config.get("Add_noise", False):
+                snr_db = config["SNRdb"]
+                noise_color = config.get("noise_color", 'white')
+                bpass_params = config.get("bpass_params", None)
+                dist = config.get("dist", 'gauss')
+                resample_pool = config.get("resample_pool", None)
+                augmented, _ = noisify(augmented, snr_db, color=noise_color, bpass_params=bpass_params, dist=dist, resample_pool=resample_pool)
 
-        # Invert
-        if config.get("Invert", False):
-            augmented = 1.0 - augmented
+            # Flip
+            if config.get("Flip", False):
+                augmented = np.flip(augmented)
 
-        # Time/Amplitude Warping
+            # Invert
+            if config.get("Invert", False):
+                augmented = 1.0 - augmented
 
-        if config.get("Bezier_time_warp", False):
-            augmented = twarp_bezier(augmented, variance=config.get("Bezier_time_warp_var", 0.01))
-        if config.get("Bezier_amp_warp", False):
-            augmented = awarp_bezier(augmented, variance=config.get("Bezier_amp_warp_var", 0.05))
-        if config.get("PCHIP_time_warp", False):
-            augmented = twarp_pchip(augmented, variance=config.get("PCHIP_time_warp_var", 0.01))
-        if config.get("PCHIP_amp_warp", False):
-            augmented = awarp_pchip(augmented, variance=config.get("PCHIP_amp_warp_var", 0.05))
+            # Time/Amplitude Warping
+
+            if config.get("Bezier_time_warp", False):
+                augmented = twarp_bezier(augmented, variance=config.get("Bezier_time_warp_var", 0.01))
+            if config.get("Bezier_amp_warp", False):
+                augmented = awarp_bezier(augmented, variance=config.get("Bezier_amp_warp_var", 0.05))
+            if config.get("PCHIP_time_warp", False):
+                augmented = twarp_pchip(augmented, variance=config.get("PCHIP_time_warp_var", 0.01))
+            if config.get("PCHIP_amp_warp", False):
+                augmented = awarp_pchip(augmented, variance=config.get("PCHIP_amp_warp_var", 0.05))
 
 
-        # Add NeuroKit2 artifacts
-        # default sampling frequency = 1000
-
-        # low frequency noise
-        if config.get("lf_noise", False):
-            augmented = nk.signal_distort(augmented, sampling_rate=config.get("sampling_rate", 1000), noise_amplitude=config.get("lf_noise_amplitude", 0.1), noise_frequency=config.get("sampling_rate", 1000)*config.get("lf_noise_frequency", 0.1))
-        # powerline
-        if config.get("powerline", False):
-            augmented = nk.signal_distort(augmented, sampling_rate=config.get("sampling_rate", 1000), powerline_amplitude=config.get("powerline_amplitude", 0.1), powerline_frequency=config.get("sampling_rate", 1000)*config.get("powerline_frequency", 0.1))
-        # burst
-        if config.get("burst", False):
+            # Add NeuroKit2 artifacts
             # default sampling frequency = 1000
-            augmented = nk.signal_distort(augmented, sampling_rate=config.get("sampling_rate", 1000), artifacts_amplitude=config.get("burst_amplitude", 0.1), artifacts_number = config.get("burst_number", 3), artifacts_frequency=config.get("sampling_rate", 1000)*config.get("burst_frequency", 0.1))
-        # drift
-        if config.get("drift", False):
-            # default sampling frequency = 1000
-            augmented = nk.signal_distort(augmented, sampling_rate=config.get("sampling_rate", 1000), linear_drift=True)
 
-        # Normalize
-        augmented = normalize(augmented)
+            # low frequency noise
+            if config.get("lf_noise", False):
+                augmented = nk.signal_distort(augmented, sampling_rate=config.get("nk_sampling_rate", 1000), noise_amplitude=config.get("lf_noise_amplitude", 0.1), noise_frequency=config.get("nk_sampling_rate", 1000)*config.get("lf_noise_frequency", 0.1))
+            # powerline
+            if config.get("powerline", False):
+                augmented = nk.signal_distort(augmented, sampling_rate=config.get("nk_sampling_rate", 1000), powerline_amplitude=config.get("powerline_amplitude", 0.1), powerline_frequency=config.get("nk_sampling_rate", 1000)*config.get("powerline_frequency", 0.1))
+            # burst
+            if config.get("burst", False):
+                # default sampling frequency = 1000
+                augmented = nk.signal_distort(augmented, sampling_rate=config.get("nk_sampling_rate", 1000), artifacts_amplitude=config.get("burst_amplitude", 0.1), artifacts_number = config.get("burst_number", 3), artifacts_frequency=config.get("nk_sampling_rate", 1000)*config.get("burst_frequency", 0.1))
+            # drift
+            if config.get("drift", False):
+                # default sampling frequency = 1000
+                augmented = nk.signal_distort(augmented, sampling_rate=config.get("nk_sampling_rate", 1000), linear_drift=True)
 
-        # Append
-        aug_versions.append(augmented)
+            # Normalize
+            augmented = normalize(augmented)
+
+            # Append
+            aug_versions.append(augmented)
 
     # Stack into (N, K)
     augdata = np.stack(aug_versions, axis=-1)

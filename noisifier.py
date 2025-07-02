@@ -1,6 +1,6 @@
 import numpy as np
 from augsig.utils import freqfilt
-def noisify(signal, snr_db, color='white', bpass_params=None, dist='gauss', resample_pool=None):
+def noisify(signal, snr_db, color='white', bpass_params=[0,1], dist='gauss', resample_pool=None):
     """
     Add colored, SNR-controlled noise to a signal.
     - signal: array-like
@@ -43,16 +43,16 @@ def noisify(signal, snr_db, color='white', bpass_params=None, dist='gauss', resa
         noise = color_noise(noise, 2)
     elif color == 'violet':
         noise = color_noise(noise, -2)
-    elif color == 'fbounded':
-        if bpass_params is None:
-            raise ValueError('frequency bounds must be provided for fbounded')
-        # bpass_params = [fl_norm, fh_norm, order]
-        noise = freqfilt(noise, *bpass_params)
     elif color == 'white':
         pass
     else:
         raise ValueError("Unknown color!")
     
+    # --- bandpass frequency filtering ---
+    # bpass_params = [fl_norm, fh_norm, order]
+    noise = freqfilt(noise, *bpass_params)
+
+
 
     noise = noise - np.mean(noise) # ensure zero mean noise
     return (signal + noise), noise
