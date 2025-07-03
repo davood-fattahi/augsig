@@ -1,5 +1,5 @@
 from augsig.utils import normalize
-from augsig.warper import twarp_bezier, awarp_bezier, twarp_pchip, awarp_pchip
+from augsig.warper import twarp_bezier, adrift_bezier, amod_bezier, twarp_pchip, adrift_pchip, amod_pchip
 from augsig.noisifier import noisify
 import numpy as np
 import neurokit2 as nk
