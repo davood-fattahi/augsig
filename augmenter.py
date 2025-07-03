@@ -44,7 +44,7 @@ def augment(data: np.ndarray, aug_config: dict) -> np.ndarray:
 
     for config in aug_config.values():
 
-        for m in range(config.get("num_copies", 1))   # Actualy it is not duplicating, but it is regenerating. Due to stochastic factors like noises, the regenerated ones won't be the same.
+        for m in range(config.get("num_copies", 1)):   # Actually it is not duplicating, but it is regenerating. Due to stochastic factors like noises, the regenerated ones won't be the same.
             augmented = data.copy()
 
             # Add noise
@@ -64,16 +64,19 @@ def augment(data: np.ndarray, aug_config: dict) -> np.ndarray:
             if config.get("Invert", False):
                 augmented = 1.0 - augmented
 
-            # Time/Amplitude Warping
-
+            # Time/Amplitude distortion
             if config.get("Bezier_time_warp", False):
                 augmented = twarp_bezier(augmented, variance=config.get("Bezier_time_warp_var", 0.01))
-            if config.get("Bezier_amp_warp", False):
-                augmented = awarp_bezier(augmented, variance=config.get("Bezier_amp_warp_var", 0.05))
+            if config.get("Bezier_amp_drift", False):
+                augmented = adrift_bezier(augmented, variance=config.get("Bezier_amp_drift_var", 0.05))
+            if config.get("Bezier_amp_mod", False):
+                augmented = amod_bezier(augmented, variance=config.get("Bezier_amp_mod_var", 0.05))
             if config.get("PCHIP_time_warp", False):
                 augmented = twarp_pchip(augmented, variance=config.get("PCHIP_time_warp_var", 0.01))
-            if config.get("PCHIP_amp_warp", False):
-                augmented = awarp_pchip(augmented, variance=config.get("PCHIP_amp_warp_var", 0.05))
+            if config.get("PCHIP_amp_drift", False):
+                augmented = adrift_pchip(augmented, variance=config.get("PCHIP_amp_drift_var", 0.05))
+            if config.get("PCHIP_amp_mod", False):
+                augmented = amod_pchip(augmented, variance=config.get("PCHIP_amp_mod_var", 0.05))
 
 
             # Add NeuroKit2 artifacts

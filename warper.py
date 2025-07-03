@@ -40,7 +40,7 @@ def twarp_pchip(signal, k=4, variance=0.05):
     pchip_map = np.clip(pchip_map, 0, 1)
     return np.interp(t, pchip_map, signal)
 
-def awarp_pchip(signal, k=4, variance=0.05):
+def adrift_pchip(signal, k=4, variance=0.05):
     signal = signal.squeeze()
     n = len(signal)
     t = np.linspace(0, 1, n)
@@ -49,7 +49,7 @@ def awarp_pchip(signal, k=4, variance=0.05):
     pchip_map = PchipInterpolator(x_vals, y_vals)(t)
     return signal + pchip_map
 
-def awarp_bezier(signal, variance=0.05):
+def adrift_bezier(signal, variance=0.05):
     signal = signal.squeeze()
     n = len(signal)
     t = np.linspace(0, 1, n)
