@@ -66,17 +66,17 @@ def augment(data: np.ndarray, aug_config: dict) -> np.ndarray:
 
             # Time/Amplitude distortion
             if config.get("Bezier_time_warp", False):
-                augmented = twarp_bezier(augmented, variance=config.get("Bezier_time_warp_var", 0.01))
+                augmented = twarp_bezier(augmented, k=config.get("Bezier_time_warp_k", 4), variance=config.get("Bezier_time_warp_var", 0.01))
             if config.get("Bezier_amp_drift", False):
-                augmented = adrift_bezier(augmented, variance=config.get("Bezier_amp_drift_var", 0.05))
+                augmented = adrift_bezier(augmented, k=config.get("Bezier_amp_drift_k", 4), variance=config.get("Bezier_amp_drift_var", 0.05))
             if config.get("Bezier_amp_mod", False):
-                augmented = amod_bezier(augmented, variance=config.get("Bezier_amp_mod_var", 0.05))
+                augmented = amod_bezier(augmented, k=config.get("Bezier_amp_mod_k", 4), variance=config.get("Bezier_amp_mod_var", 0.05))
             if config.get("PCHIP_time_warp", False):
-                augmented = twarp_pchip(augmented, variance=config.get("PCHIP_time_warp_var", 0.01))
+                augmented = twarp_pchip(augmented, k=config.get("PCHIP_time_warp_k", 4), variance=config.get("PCHIP_time_warp_var", 0.01))
             if config.get("PCHIP_amp_drift", False):
-                augmented = adrift_pchip(augmented, variance=config.get("PCHIP_amp_drift_var", 0.05))
+                augmented = adrift_pchip(augmented, k=config.get("PCHIP_amp_drift_k", 4), variance=config.get("PCHIP_amp_drift_var", 0.05))
             if config.get("PCHIP_amp_mod", False):
-                augmented = amod_pchip(augmented, variance=config.get("PCHIP_amp_mod_var", 0.05))
+                augmented = amod_pchip(augmented, k=config.get("PCHIP_amp_mod_k", 4), variance=config.get("PCHIP_amp_mod_var", 0.05))
 
 
             # Add NeuroKit2 artifacts

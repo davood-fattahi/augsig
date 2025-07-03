@@ -22,11 +22,11 @@ def bezier_curve(t, points):
         t**3 * P3
     )
 
-def twarp_bezier(signal, variance=0.05):
+def twarp_bezier(signal, k=4, variance=0.05):
     signal = signal.squeeze()
     n = len(signal)
     t = np.linspace(0, 1, n)
-    _, y_vals = rand_knots(k=4, variance=variance)
+    _, y_vals = rand_knots(k=k, variance=variance)
     bezier_map = bezier_curve(t, y_vals)
     bezier_map = np.clip(bezier_map, 0, 1)
     return np.interp(t, bezier_map, signal)
@@ -49,19 +49,19 @@ def adrift_pchip(signal, k=4, variance=0.05):
     pchip_map = PchipInterpolator(x_vals, y_vals)(t)
     return signal + pchip_map
 
-def adrift_bezier(signal, variance=0.05):
+def adrift_bezier(signal, k=4, variance=0.05):
     signal = signal.squeeze()
     n = len(signal)
     t = np.linspace(0, 1, n)
-    y_vals = np.random.uniform(-variance, variance, size=4)
+    y_vals = np.random.uniform(-variance, variance, size=k)
     bezier_map = bezier_curve(t, y_vals)
     return signal + bezier_map
 
-def amod_bezier(signal, variance=0.05):
+def amod_bezier(signal, k=4, variance=0.05):
     signal = signal.squeeze()
     n = len(signal)
     t = np.linspace(0, 1, n)
-    y_vals = np.random.uniform(1-variance, 1+variance, size=4)
+    y_vals = np.random.uniform(1-variance, 1+variance, size=k)
     bezier_map = bezier_curve(t, y_vals)
     return signal * bezier_map
 
