@@ -81,19 +81,3 @@ def amod_pchip(signal, k=4, variance=0.05):
     y_vals = np.random.uniform(1-variance, 1+variance, size=k)
     pchip_map = PchipInterpolator(x_vals, y_vals)(t)
     return signal * pchip_map
-
-
-
-# def rand_knots(k=4, variance=0.05):
-#     x_vals = np.append(np.append(0, np.arange(0, 1, 1/(k-2)) + 1/(2*k - 4)), 1)
-#     y_vals = x_vals.copy()
-
-#     x_vals[1:-1] += np.random.uniform(-variance, variance, size=k-2)
-#     y_vals[1:-1] += np.random.uniform(-variance, variance, size=k-2)
-
-#     x_vals = np.sort(x_vals)
-#     x_vals = min_max_scale(x_vals)
-#     y_vals = np.sort(y_vals)
-#     y_vals = min_max_scale(y_vals)
-
-#     return x_vals, y_vals
