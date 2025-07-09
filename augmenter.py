@@ -51,7 +51,7 @@ def augment(data: np.ndarray, aug_config: dict) -> np.ndarray:
             if config.get("Add_noise", False):
                 snr_db = config["SNRdb"]
                 noise_color = config.get("noise_color", 'white')
-                bpass_params = config.get("bpass_params", None)
+                bpass_params = config.get("bpass_params", [0, 1])
                 dist = config.get("dist", 'gauss')
                 resample_pool = config.get("resample_pool", None)
                 augmented, _ = noisify(augmented, snr_db, color=noise_color, bpass_params=bpass_params, dist=dist, resample_pool=resample_pool)

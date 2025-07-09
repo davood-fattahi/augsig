@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.interpolate import PchipInterpolator
+from scipy.special import comb
 import warnings
 
 def rand_knots(k=4, variance=0.05):
@@ -20,7 +21,7 @@ def rand_knots(k=4, variance=0.05):
     y_vals[1:-1] += np.random.uniform(-variance, variance, size=k-2)
     return x_vals, y_vals
 
-def bezier_curve(t, points):
+def bezier_cubic_curve(t, points):
     P0, P1, P2, P3 = points
     return (
         (1 - t)**3 * P0 +
@@ -28,6 +29,32 @@ def bezier_curve(t, points):
         3 * (1 - t) * t**2 * P2 +
         t**3 * P3
     )
+
+
+
+def bezier_curve(t, control_points):
+    """
+    Generalized Bézier curve for any number of control points.
+
+    Args:
+        t (np.ndarray): Parameter values in [0, 1], shape (N,)
+        control_points (np.ndarray or list): Control points, shape (K,)
+
+    Returns:
+        np.ndarray: Bézier curve values evaluated at each t, shape (N,)
+    """
+    control_points = np.asarray(control_points)
+    n = len(control_points) - 1
+    curve = np.zeros_like(t, dtype=float)
+
+    for i in range(n + 1):
+        binomial = comb(n, i)
+        curve += binomial * (1 - t) ** (n - i) * t ** i * control_points[i]
+
+    return curve
+
+
+
 
 def twarp_bezier(signal, k=4, variance=0.05):
     signal = signal.squeeze()
