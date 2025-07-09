@@ -1,16 +1,23 @@
 import numpy as np
 from scipy.interpolate import PchipInterpolator
+import warnings
 
 def rand_knots(k=4, variance=0.05):
-    x_vals = np.append(np.append(0, np.arange(0, 1, 1/(k-2)) + 1/(2*k - 4)), 1)
+    var_max = 1/(2*k - 4)
+
+    if variance<=0:
+        variance = 0.05*var_max
+        warnings.warn("The variance was not a possitive value! It is automatically set to (0.05 * maximum value)!", UserWarning)
+
+    if variance>=var_max:
+        variance = 0.95*var_max
+        warnings.warn("The variance was too large! It is automatically set to (0.95 * maximum value)!", UserWarning)
+
+    x_vals = np.append(np.append(0, np.arange(0, 1, 2*var_max) + var_max), 1)
     y_vals = x_vals.copy()
 
     x_vals[1:-1] += np.random.uniform(-variance, variance, size=k-2)
     y_vals[1:-1] += np.random.uniform(-variance, variance, size=k-2)
-
-    x_vals = np.clip(x_vals, 0, 1)
-    y_vals = np.clip(y_vals, 0, 1)
-    x_vals[1:-1] = np.sort(x_vals[1:-1])
     return x_vals, y_vals
 
 def bezier_curve(t, points):
@@ -76,3 +83,17 @@ def amod_pchip(signal, k=4, variance=0.05):
     return signal * pchip_map
 
 
+
+# def rand_knots(k=4, variance=0.05):
+#     x_vals = np.append(np.append(0, np.arange(0, 1, 1/(k-2)) + 1/(2*k - 4)), 1)
+#     y_vals = x_vals.copy()
+
+#     x_vals[1:-1] += np.random.uniform(-variance, variance, size=k-2)
+#     y_vals[1:-1] += np.random.uniform(-variance, variance, size=k-2)
+
+#     x_vals = np.sort(x_vals)
+#     x_vals = min_max_scale(x_vals)
+#     y_vals = np.sort(y_vals)
+#     y_vals = min_max_scale(y_vals)
+
+#     return x_vals, y_vals
