@@ -7,8 +7,8 @@ def rand_knots(k=4, variance=0.05):
     var_max = 1/(2*k - 4)
 
     if variance<=0:
-        variance = 0.05*var_max
-        warnings.warn("The variance was not a possitive value! It is automatically set to (0.05 * maximum value)!", UserWarning)
+        variance = 0.01*var_max
+        warnings.warn("The variance was not a possitive value! It is automatically set to (0.01 * maximum value)!", UserWarning)
 
     if variance>=var_max:
         variance = 0.95*var_max
