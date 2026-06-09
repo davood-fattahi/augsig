@@ -6,19 +6,27 @@
 
 ## Installation
 
-From PyPI:
+**Option 1 — From PyPI:**
 
 ```bash
 pip install augsig
 ```
 
-Or from source:
+**Option 2 — From source:**
 
 ```bash
 git clone https://github.com/davood-fattahi/augsig.git
 cd augsig
 pip install .
 ```
+
+**Option 3 — Without installation:** download or copy the `augsig/` folder into your project directory and import directly:
+
+```python
+from augsig import augment, Augment
+```
+
+Only `numpy` and `scipy` must be importable.
 
 `matplotlib` is required only for the demo script (`tests/test.py`).
 
@@ -360,10 +368,14 @@ augsig/
 │   ├── warper.py         # Bezier and PCHIP warping, linear drift
 │   └── utils.py          # Normalization and Butterworth filtering
 ├── tests/
-│   └── test.py           # Informal demo and visualization script
+│   ├── test.py           # Informal demo and visualization script
+│   └── test_augsig.py    # pytest unit tests
 ├── data/
-│   └── sample_ppg.npy    # Sample PPG signal for testing
-└── pyproject.toml        # Packaging config (setuptools, Python >= 3.8)
+│   └── sample_ppg.npy    # 30-second PPG segment from BIDMC (PhysioNet, ODC-BY), record bidmc01 PLETH channel, resampled to 40 Hz
+├── requirements.txt
+├── pyproject.toml        # Packaging config (setuptools, Python >= 3.8)
+├── LICENSE
+└── AUTHORS.txt
 ```
 
 ---

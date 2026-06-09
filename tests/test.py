@@ -13,7 +13,7 @@ from augsig.augmenter import augment, Augment
 # Config
 # ---------------------------------------------------------------------------
 DATA_PATH = "data/sample_ppg.npy"
-FS = 40  # Hz — sampling rate of the sample PPG
+FS = 40  # Hz — sampling rate of the sample PPG (BIDMC dataset, PLETH channel, resampled from 125 Hz)
 
 # ---------------------------------------------------------------------------
 # Signal loading
