@@ -1,10 +1,12 @@
 [build-system]
-requires = ["setuptools>=61"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "augsig"
 version = "0.2.0"
+readme = "README.md"
+license = "BSD-3-Clause"
 requires-python = ">=3.8"
 dependencies = [
     "numpy>=1.21",
