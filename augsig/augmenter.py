@@ -46,8 +46,13 @@ def augment(data: np.ndarray, aug_config: dict, seed=None, normalize_output=True
     Returns:
         np.ndarray: shape (N, K), where K = number of augmented versions + 1 (original)
     """
+    data = np.asarray(data)
+    orig_shape = data.shape
+    data = data.squeeze()
     if data.ndim != 1:
-        raise ValueError("Input data must be a 1D NumPy array (N,)")
+        raise ValueError(
+            f"Input data must be a 1D array (N,), got shape {orig_shape}"
+        )
 
     rng = np.random.default_rng(seed)
     aug_versions = [data.copy()]

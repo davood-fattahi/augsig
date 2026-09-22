@@ -31,10 +31,18 @@ def freqfilt(signal, fl_norm, fh_norm, order=4):
         return signal
     elif fl_norm == 0:
         b, a = butter(order, fh_norm, btype='lowpass')
-        return filtfilt(b, a, signal)
     elif fh_norm == 1:
         b, a = butter(order, fl_norm, btype='highpass')
-        return filtfilt(b, a, signal)
     else:
         b, a = butter(order, [fl_norm, fh_norm], btype='band')
-        return filtfilt(b, a, signal)
+
+    n = np.shape(signal)[-1]
+    min_len = 3 * max(len(a), len(b))
+    if n <= min_len:
+        raise ValueError(
+            f"signal is too short to filter: got {n} samples, but an "
+            f"order-{order} filter requires more than {min_len}. "
+            f"Use a longer signal or a lower filter order."
+        )
+
+    return filtfilt(b, a, signal)

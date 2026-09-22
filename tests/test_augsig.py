@@ -1,8 +1,9 @@
 import numpy as np
 import pytest
 from augsig import augment, Augment
-from augsig.noisifier import noisify, burstify
+from augsig.noisifier import noisify, burstify, burst_mask
 from augsig.warper import (
+    rand_knots,
     twarp_bezier, twarp_pchip,
     adrift_bezier, adrift_pchip,
     amod_bezier, amod_pchip,
@@ -287,3 +288,190 @@ class TestAugmentClass:
         aug = Augment(config, seed=0, normalize_output=False)
         out = aug(signal)
         assert out.shape == (N, 2)
+
+
+# ---------------------------------------------------------------------------
+# Regression tests for PhysioNet review comments (submission vuCy1q8QeG9EZqJLvMB1)
+#
+# Each class below pins one reviewer item so a later change cannot silently
+# reintroduce the defect. Tags match PhysioNet_materials/reviewers-comments-s1.txt
+# ---------------------------------------------------------------------------
+
+WARP_FNS = [twarp_bezier, twarp_pchip, adrift_bezier,
+            adrift_pchip, amod_bezier, amod_pchip]
+RAND_KNOTS_FNS = [twarp_bezier, twarp_pchip, adrift_pchip, amod_pchip]
+BEZIER_AMP_FNS = [adrift_bezier, amod_bezier]
+
+
+class TestSignalShapeHandling:
+    """B3c: bare squeeze() replaced by explicit 1D validation."""
+
+    @pytest.mark.parametrize("fn", WARP_FNS)
+    @pytest.mark.parametrize("shape", [(N,), (N, 1), (1, N)])
+    def test_singleton_axes_accepted(self, fn, shape):
+        x = np.random.default_rng(0).standard_normal(shape)
+        out = fn(x, k=4, variance=0.01, rng=np.random.default_rng(0))
+        assert out.shape == (N,)
+
+    @pytest.mark.parametrize("fn", WARP_FNS)
+    def test_true_2d_rejected(self, fn):
+        x = np.zeros((3, 100))
+        with pytest.raises(ValueError, match="1D array"):
+            fn(x, k=4, variance=0.01, rng=np.random.default_rng(0))
+
+    def test_error_reports_original_shape(self):
+        with pytest.raises(ValueError, match=r"\(1, 2, 100\)"):
+            twarp_bezier(np.zeros((1, 2, 100)), k=4, rng=np.random.default_rng(0))
+
+    @pytest.mark.parametrize("shape", [(N,), (N, 1), (1, N)])
+    def test_drift_linear_singleton_axes(self, shape):
+        x = np.random.default_rng(0).standard_normal(shape)
+        out = drift_linear(x, a=[-0.3, 0.3], b=[-0.1, 0.1], rng=np.random.default_rng(0))
+        assert out.shape == (N,)
+
+    def test_burst_mask_singleton_axes(self):
+        noise = np.random.default_rng(0).standard_normal((1, N))
+        out = burst_mask(noise, n_bursts=2, burst_width=10, burst_base=0.0, burst_onset=5)
+        assert out.shape == (N,)
+
+    def test_burst_mask_rejects_true_2d(self):
+        with pytest.raises(ValueError, match="1D array"):
+            burst_mask(np.zeros((3, 100)), n_bursts=1, burst_width=5,
+                       burst_base=0.0, burst_onset=0)
+
+
+class TestAugmentShapeHandling:
+    """B3c / A2: augment() agrees with the functions it calls."""
+
+    @pytest.mark.parametrize("shape", [(N,), (N, 1), (1, N)])
+    def test_singleton_axes_accepted(self, shape):
+        x = np.random.default_rng(0).standard_normal(shape)
+        out = augment(x, {"a": {"Add_noise": True, "SNRdb": 20}}, seed=0)
+        assert out.shape == (N, 2)
+
+    def test_true_2d_rejected(self):
+        with pytest.raises(ValueError, match=r"\(3, 100\)"):
+            augment(np.zeros((3, 100)), {"a": {"Flip": True}}, seed=0)
+
+    def test_list_input_accepted(self):
+        x = list(np.random.default_rng(0).standard_normal(N))
+        out = augment(x, {"a": {"Flip": True}}, seed=0)
+        assert out.shape == (N, 2)
+
+
+class TestKValidation:
+    """B3a / B3b: k is validated, with the bound each group actually needs."""
+
+    def test_rand_knots_returns_k_total_knots(self):
+        for k in (3, 4, 5, 6):
+            x_vals, y_vals = rand_knots(k=k, variance=1e-9, rng=np.random.default_rng(0))
+            assert len(x_vals) == k
+            assert len(y_vals) == k
+
+    @pytest.mark.parametrize("fn", RAND_KNOTS_FNS)
+    @pytest.mark.parametrize("k", [0, 1, 2])
+    def test_rand_knots_group_requires_k_ge_3(self, signal, fn, k):
+        with pytest.raises(ValueError, match="k must be"):
+            fn(signal, k=k, variance=0.01, rng=np.random.default_rng(0))
+
+    @pytest.mark.parametrize("fn", BEZIER_AMP_FNS)
+    def test_bezier_amp_rejects_k_zero(self, signal, fn):
+        # k=0 produced an empty envelope: amod_bezier zeroed the signal outright
+        with pytest.raises(ValueError, match="k must be"):
+            fn(signal, k=0, variance=0.05, rng=np.random.default_rng(0))
+
+    @pytest.mark.parametrize("fn", BEZIER_AMP_FNS)
+    @pytest.mark.parametrize("k", [1, 2])
+    def test_bezier_amp_allows_small_positive_k(self, signal, fn, k):
+        out = fn(signal, k=k, variance=0.05, rng=np.random.default_rng(0))
+        assert out.shape == signal.shape
+        assert np.all(np.isfinite(out))
+
+    @pytest.mark.parametrize("fn", WARP_FNS)
+    def test_non_integer_k_rejected(self, signal, fn):
+        with pytest.raises(ValueError, match="k must be"):
+            fn(signal, k=3.5, variance=0.01, rng=np.random.default_rng(0))
+
+
+class TestFreqfiltShortSignal:
+    """B3d: short signals get a package-level error, not a SciPy internal one."""
+
+    def test_short_signal_raises(self):
+        with pytest.raises(ValueError, match="too short"):
+            freqfilt(np.zeros(20), 0.1, 0.8)
+
+    def test_message_avoids_scipy_internals(self):
+        with pytest.raises(ValueError) as exc:
+            freqfilt(np.zeros(20), 0.1, 0.8)
+        message = str(exc.value)
+        assert "padlen" not in message
+        assert "20" in message
+
+    def test_lowpass_minimum_is_lower_than_bandpass(self):
+        # an order-4 lowpass needs > 15 samples; the bandpass needs > 27
+        lowpassed = freqfilt(np.random.default_rng(0).standard_normal(20), 0.0, 0.8)
+        assert lowpassed.shape == (20,)
+        with pytest.raises(ValueError, match="too short"):
+            freqfilt(np.zeros(20), 0.1, 0.8)
+
+    def test_full_band_bypasses_length_check(self):
+        x = np.zeros(5)
+        np.testing.assert_array_equal(freqfilt(x, 0, 1), x)
+
+    def test_long_signal_filters(self):
+        out = freqfilt(np.random.default_rng(0).standard_normal(200), 0.1, 0.8)
+        assert out.shape == (200,)
+
+
+class TestBurstCount:
+    """B2: n_bursts=0 means no bursts, not full-length broadband noise."""
+
+    def test_zero_bursts_adds_nothing(self, signal):
+        noisy, burst = burstify(signal, snr_db=10, n_bursts=0, rng=np.random.default_rng(0))
+        assert np.count_nonzero(burst) == 0
+        np.testing.assert_array_equal(noisy, signal)
+
+    def test_negative_bursts_rejected(self, signal):
+        with pytest.raises(ValueError, match="n_bursts"):
+            burstify(signal, snr_db=10, n_bursts=-1, rng=np.random.default_rng(0))
+
+    def test_coverage_increases_with_burst_count(self, signal):
+        _, b1 = burstify(signal, snr_db=10, n_bursts=1, burst_width=10,
+                         rng=np.random.default_rng(3))
+        _, b5 = burstify(signal, snr_db=10, n_bursts=5, burst_width=10,
+                         rng=np.random.default_rng(3))
+        assert 0 < np.count_nonzero(b1) < np.count_nonzero(b5) < len(signal)
+
+
+class TestResamplePool:
+    """B1: resample_pool accepts an external array, as the README documents."""
+
+    def test_ndarray_pool(self, signal):
+        pool = np.random.default_rng(1).standard_normal(1000)
+        noisy, noise = noisify(signal, snr_db=15, dist="resample", resample_pool=pool,
+                               rng=np.random.default_rng(0))
+        assert noisy.shape == signal.shape
+        assert noise.shape == signal.shape
+
+    def test_list_pool(self, signal):
+        pool = list(np.random.default_rng(1).standard_normal(100))
+        noisy, _ = noisify(signal, snr_db=15, dist="resample", resample_pool=pool,
+                           rng=np.random.default_rng(0))
+        assert noisy.shape == signal.shape
+
+    def test_self_pool_still_works(self, signal):
+        noisy, _ = noisify(signal, snr_db=15, dist="resample", resample_pool="self",
+                           rng=np.random.default_rng(0))
+        assert noisy.shape == signal.shape
+
+    def test_missing_pool_rejected(self, signal):
+        with pytest.raises(ValueError, match="resample_pool"):
+            noisify(signal, snr_db=15, dist="resample", resample_pool=None,
+                    rng=np.random.default_rng(0))
+
+    def test_samples_are_drawn_from_the_pool(self, signal):
+        # a two-valued pool must yield exactly two distinct noise levels
+        pool = np.array([-1.0, 1.0])
+        _, noise = noisify(signal, snr_db=15, dist="resample", resample_pool=pool,
+                           zero_mean=False, rng=np.random.default_rng(0))
+        assert len(np.unique(np.round(noise, 9))) == 2

@@ -16,7 +16,13 @@ def burst_mask(noise, n_bursts, burst_width, burst_base, burst_onset):
     Returns:
         np.ndarray: burst-masked noise
     """
+    noise = np.asarray(noise)
+    orig_shape = noise.shape
     noise = noise.squeeze()
+    if noise.ndim != 1:
+        raise ValueError(
+            f"noise must be a 1D array (N,), got shape {orig_shape}"
+        )
     n = len(noise)
 
     if np.isscalar(burst_width):
@@ -109,7 +115,7 @@ def noisify(signal, snr_db, color='white', bpass_params=[0, 1], dist='gauss',
     elif dist == 'resample':
         if resample_pool is None:
             raise ValueError("resample_pool must be provided for resample distribution")
-        elif resample_pool == "self":
+        elif isinstance(resample_pool, str) and resample_pool == "self":
             resample_pool = signal
         noise = rng.choice(resample_pool, size=n, replace=True)
     else:
@@ -199,39 +205,41 @@ def burstify(signal, snr_db, color='white', bpass_params=[0, 0.1], dist='laplace
         rng=rng,
     )
 
-    if n_bursts > 0:
-        if (isinstance(burst_width, (list, tuple, np.ndarray))
-                and len(burst_width) == 2 and np.isscalar(burst_width[0])):
-            burst_width_arr = rng.integers(
-                int(burst_width[0]), int(burst_width[1]) + 1, size=n_bursts
-            )
-        elif np.isscalar(burst_width):
-            burst_width_arr = np.full(n_bursts, int(burst_width))
-        else:
-            raise ValueError("burst_width must be an int or a length-2 interval")
+    if n_bursts < 0:
+        raise ValueError("n_bursts must be a non-negative integer")
 
-        if (isinstance(burst_base, (list, tuple, np.ndarray))
-                and len(burst_base) == 2 and np.isscalar(burst_base[0])):
-            burst_base_arr = rng.uniform(
-                float(burst_base[0]), float(burst_base[1]), size=n_bursts
-            )
-        elif np.isscalar(burst_base):
-            burst_base_arr = np.full(n_bursts, float(burst_base))
-        else:
-            raise ValueError("burst_base must be a float/int or a length-2 interval")
-
-        burst_onset_arr = np.array([
-            rng.integers(0, max(1, n - int(w) + 1)) if int(w) > 0 else 0
-            for w in burst_width_arr
-        ], dtype=int)
-
-        noise = burst_mask(
-            noise=noise,
-            n_bursts=n_bursts,
-            burst_width=burst_width_arr,
-            burst_base=burst_base_arr,
-            burst_onset=burst_onset_arr,
+    if (isinstance(burst_width, (list, tuple, np.ndarray))
+            and len(burst_width) == 2 and np.isscalar(burst_width[0])):
+        burst_width_arr = rng.integers(
+            int(burst_width[0]), int(burst_width[1]) + 1, size=n_bursts
         )
+    elif np.isscalar(burst_width):
+        burst_width_arr = np.full(n_bursts, int(burst_width))
+    else:
+        raise ValueError("burst_width must be an int or a length-2 interval")
+
+    if (isinstance(burst_base, (list, tuple, np.ndarray))
+            and len(burst_base) == 2 and np.isscalar(burst_base[0])):
+        burst_base_arr = rng.uniform(
+            float(burst_base[0]), float(burst_base[1]), size=n_bursts
+        )
+    elif np.isscalar(burst_base):
+        burst_base_arr = np.full(n_bursts, float(burst_base))
+    else:
+        raise ValueError("burst_base must be a float/int or a length-2 interval")
+
+    burst_onset_arr = np.array([
+        rng.integers(0, max(1, n - int(w) + 1)) if int(w) > 0 else 0
+        for w in burst_width_arr
+    ], dtype=int)
+
+    noise = burst_mask(
+        noise=noise,
+        n_bursts=n_bursts,
+        burst_width=burst_width_arr,
+        burst_base=burst_base_arr,
+        burst_onset=burst_onset_arr,
+    )
 
     if zero_mean:
         noise = noise - np.mean(noise)
