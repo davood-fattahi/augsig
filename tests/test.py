@@ -19,9 +19,8 @@ FS = 40  # Hz — sampling rate of the sample PPG (BIDMC dataset, PLETH channel,
 # Signal loading
 # ---------------------------------------------------------------------------
 try:
-    X = np.load(DATA_PATH)
-    x = X[0].squeeze()
-    print(f"Loaded real data: shape {X.shape}, using row 0 (length {len(x)})\n")
+    x = np.load(DATA_PATH)
+    print(f"Loaded real data: shape {x.shape} (length {len(x)})\n")
 except Exception:
     print("Real data not found — using synthetic PPG-like signal\n")
     t = np.linspace(0, 10, FS * 10)

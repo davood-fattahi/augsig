@@ -5,6 +5,10 @@ import warnings
 
 
 def rand_knots(k=4, variance=0.05, rng=None):
+
+    if not isinstance(k, (int, np.integer)) or k < 3:
+        raise ValueError("k must be an integer greater than 2")
+
     if rng is None:
         rng = np.random.default_rng()
 
@@ -67,7 +71,13 @@ def bezier_curve(t, control_points):
 
 
 def twarp_bezier(signal, k=4, variance=0.05, rng=None):
+    signal = np.asarray(signal)
+    orig_shape = signal.shape
     signal = signal.squeeze()
+    if signal.ndim != 1:
+        raise ValueError(
+            f"signal must be a 1D array (N,), got shape {orig_shape}"
+        )
     n = len(signal)
     t = np.linspace(0, 1, n)
     _, y_vals = rand_knots(k=k, variance=variance, rng=rng)
@@ -77,7 +87,13 @@ def twarp_bezier(signal, k=4, variance=0.05, rng=None):
 
 
 def twarp_pchip(signal, k=4, variance=0.05, rng=None):
+    signal = np.asarray(signal)
+    orig_shape = signal.shape
     signal = signal.squeeze()
+    if signal.ndim != 1:
+        raise ValueError(
+            f"signal must be a 1D array (N,), got shape {orig_shape}"
+        )
     n = len(signal)
     t = np.linspace(0, 1, n)
     x_vals, y_vals = rand_knots(k=k, variance=variance, rng=rng)
@@ -87,9 +103,15 @@ def twarp_pchip(signal, k=4, variance=0.05, rng=None):
 
 
 def adrift_pchip(signal, k=4, variance=0.05, rng=None):
+    signal = np.asarray(signal)
+    orig_shape = signal.shape
+    signal = signal.squeeze()
+    if signal.ndim != 1:
+        raise ValueError(
+            f"signal must be a 1D array (N,), got shape {orig_shape}"
+        )
     if rng is None:
         rng = np.random.default_rng()
-    signal = signal.squeeze()
     n = len(signal)
     t = np.linspace(0, 1, n)
     x_vals, _ = rand_knots(k=k, variance=variance, rng=rng)
@@ -99,9 +121,17 @@ def adrift_pchip(signal, k=4, variance=0.05, rng=None):
 
 
 def adrift_bezier(signal, k=4, variance=0.05, rng=None):
+    signal = np.asarray(signal)
+    orig_shape = signal.shape
+    signal = signal.squeeze()
+    if signal.ndim != 1:
+        raise ValueError(
+            f"signal must be a 1D array (N,), got shape {orig_shape}"
+        )
+    if not isinstance(k, (int, np.integer)) or k < 1:
+        raise ValueError("k must be a positive integer")
     if rng is None:
         rng = np.random.default_rng()
-    signal = signal.squeeze()
     n = len(signal)
     t = np.linspace(0, 1, n)
     y_vals = rng.uniform(-variance, variance, size=k)
@@ -110,9 +140,17 @@ def adrift_bezier(signal, k=4, variance=0.05, rng=None):
 
 
 def amod_bezier(signal, k=4, variance=0.05, rng=None):
+    signal = np.asarray(signal)
+    orig_shape = signal.shape
+    signal = signal.squeeze()
+    if signal.ndim != 1:
+        raise ValueError(
+            f"signal must be a 1D array (N,), got shape {orig_shape}"
+        )
+    if not isinstance(k, (int, np.integer)) or k < 1:
+        raise ValueError("k must be a positive integer")
     if rng is None:
         rng = np.random.default_rng()
-    signal = signal.squeeze()
     n = len(signal)
     t = np.linspace(0, 1, n)
     y_vals = rng.uniform(1 - variance, 1 + variance, size=k)
@@ -121,9 +159,15 @@ def amod_bezier(signal, k=4, variance=0.05, rng=None):
 
 
 def amod_pchip(signal, k=4, variance=0.05, rng=None):
+    signal = np.asarray(signal)
+    orig_shape = signal.shape
+    signal = signal.squeeze()
+    if signal.ndim != 1:
+        raise ValueError(
+            f"signal must be a 1D array (N,), got shape {orig_shape}"
+        )
     if rng is None:
         rng = np.random.default_rng()
-    signal = signal.squeeze()
     n = len(signal)
     t = np.linspace(0, 1, n)
     x_vals, _ = rand_knots(k=k, variance=variance, rng=rng)
@@ -145,10 +189,16 @@ def drift_linear(signal, a, b, rng=None):
     Returns:
         np.ndarray: signal with added linear drift
     """
+    signal = np.asarray(signal)
+    orig_shape = signal.shape
+    signal = signal.squeeze()
+    if signal.ndim != 1:
+        raise ValueError(
+            f"signal must be a 1D array (N,), got shape {orig_shape}"
+        )
     if rng is None:
         rng = np.random.default_rng()
 
-    signal = signal.squeeze()
     n = len(signal)
     t = np.linspace(0, 1, n)
 

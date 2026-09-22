@@ -26,7 +26,7 @@ pip install .
 from augsig import augment, Augment
 ```
 
-Only `numpy` and `scipy` must be importable.
+Only `numpy` (>= 1.21) and `scipy` (>= 1.7) must be importable.
 
 `matplotlib` is required only for the demo script (`tests/test.py`).
 
@@ -35,6 +35,8 @@ Only `numpy` and `scipy` must be importable.
 ## Function Reference
 
 These lower-level functions can be called directly for fine-grained control. They are also composed automatically by the augmentation pipeline described in the next section.
+
+> **Input shape:** every function takes a 1D signal of shape `(N,)`. Shapes with singleton axes, such as `(N, 1)` or `(1, N)`, are squeezed automatically. Any other shape raises `ValueError`.
 
 ### Noise & Artifacts
 
@@ -90,7 +92,7 @@ Generates localized burst artifacts by masking colored noise into short, randoml
 | `bpass_params` | list | `[0, 0.1]` | Bandpass cutoffs for the base noise |
 | `dist` | str | `'laplace'` | Sample distribution (see `noisify`) |
 | `resample_pool` | array or `'self'` | `None` | Pool for empirical resampling |
-| `n_bursts` | int | `10` | Number of bursts |
+| `n_bursts` | int | `10` | Number of bursts. `0` adds no burst noise; negative values raise `ValueError` |
 | `burst_width` | int or [min, max] | `[1, 10]` | Burst width in samples; a 2-element list samples each width uniformly |
 | `burst_base` | float or [min, max] | `0.0` | DC offset added inside each burst |
 | `zero_mean` | bool | `False` | Subtract mean from the final burst signal |
@@ -119,7 +121,7 @@ All warping functions share the parameters below.
 | Parameter | Type | Default | Description |
 |---|---|---|---|
 | `signal` | np.ndarray | — | 1D input signal |
-| `k` | int | `4` | Number of control points / knots. Scale with signal length for consistent warp density |
+| `k` | int | `4` | Total number of control points / knots, endpoints included. Scale with signal length for consistent warp density. Time-warp and PCHIP functions require `k >= 3`; `adrift_bezier` and `amod_bezier` require `k >= 1` |
 | `variance` | float | `0.05` | Perturbation strength. Capped internally at `1 / (2k − 4)` to ensure monotonicity |
 | `rng` | np.random.Generator | `None` | Seeded RNG |
 
@@ -382,7 +384,7 @@ augsig/
 
 ## License
 
-MIT License
+BSD 3-Clause License
 
 ---
 
